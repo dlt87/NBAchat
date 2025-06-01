@@ -26,15 +26,19 @@ io.on('connection', (socket) => {
   // Store full message object
   socket.on('chat message', (msg) => {
     const now = new Date();
-    const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formattedTime = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/New_York' // <-- set the desired time zone here
+    });
 
     const msgWithTime = {
       ...msg,
       time: formattedTime
     };
 
-    messages.push(msgWithTime);           // Store message with time
-    io.emit('chat message', msgWithTime); // Broadcast message with time
+    messages.push(msgWithTime);
+    io.emit('chat message', msgWithTime);
   });
 
   socket.on('disconnect', () => {
