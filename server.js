@@ -22,9 +22,10 @@ io.on('connection', (socket) => {
   socket.emit('chat history', messages);
 
   // When a message is sent
+  // Store full message object
   socket.on('chat message', (msg) => {
-    messages.push(msg); // add to memory
-    io.emit('chat message', msg); // send to all clients
+    messages.push(msg);
+    io.emit('chat message', msg);
   });
 
   socket.on('disconnect', () => {
