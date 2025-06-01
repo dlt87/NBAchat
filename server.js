@@ -1,147 +1,74 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const chatHistory = [];
-const cookie = require('cookie');
-
+require('dotenv').config();
+const express = require("express");
+const session = require("express-session");
+const cors = require("cors");
+const passport = require("passport");
+const TwitchStrategy = require("passport-twitch-new").Strategy;
+const http = require("http");
+const { Server } = require("socket.io");
+const path = require("path");
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "https://dlt87.github.io",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
+// 🔧 Required for Render & secure cookies
+app.set("trust proxy", 1);
+
+// ✅ Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || "supersecretkey",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true,
+    sameSite: "None",
+    httpOnly: true
+  }
+}));
+
+// ✅ Passport setup
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ✅ CORS (must be AFTER session & passport)
 app.use(cors({
   origin: "https://dlt87.github.io",
   credentials: true
 }));
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "https://dlt87.github.io/NBAchat-frontend/index.html", // allow all for dev — restrict in production!
-    credentials: true // allow cookies to be sent
-  },
-});
-
-const messages = []; // store chat messages in memory
-
-io.on('connection', (socket) => {
-  try {
-    const cookies = socket.handshake.headers.cookie;
-    const parsedCookies = cookie.parse(cookies || '');
-    const raw = parsedCookies['connect.sid'];
-
-    if (raw) {
-      // Express session format: "s:<base64-signature>"
-      const sid = raw.startsWith('s:') ? raw.slice(2).split('.')[0] : raw;
-
-      // You can optionally verify this sid against session store here if needed
-
-      console.log('User connected with session ID:', sid);
-    }
-  } catch (err) {
-    console.error('Failed to parse cookies:', err);
-  }
-
-  console.log('a user connected');
-  
-  // Emit chat history
-  socket.emit('chat history', messages);
-
-  socket.on('chat message', (msg) => {
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Vancouver'
-    });
-
-    const msgWithTime = {
-      ...msg,
-      time: formattedTime
-    };
-
-    messages.push(msgWithTime);
-    io.emit('chat message', msgWithTime);
-  });
-
-  // ➕ Send join message
-  socket.on('user joined', (displayName) => {
-    const joinMsg = {
-      user: 'System',
-      text: `${displayName} has joined the chat.`,
-      time: new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/Vancouver'
-      })
-    };
-    messages.push(joinMsg);
-    io.emit('chat message', joinMsg);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
-});
-
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// ALL TWITCH AUTHENTICATION STUFF BELOWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-require('dotenv').config();
-const session = require('express-session');
-const passport = require('passport');
-const TwitchStrategy = require('passport-twitch-new').Strategy;
-
-// Session setup
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'supersecretkey',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: true,         // ✅ required for HTTPS
-    sameSite: 'None',      // ✅ required for cross-site cookies
-    httpOnly: true // ✅ helps prevent XSS attacks
-  }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Serialize/deserialize user
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
-});
-
-// Configure Twitch strategy
+// 🧠 Passport strategy
 passport.use(new TwitchStrategy({
   clientID: process.env.TWITCH_CLIENT_ID,
   clientSecret: process.env.TWITCH_CLIENT_SECRET,
-  callbackURL: process.env.TWITCH_CALLBACK_URL,
-  scope: 'user:read:email'
+  callbackURL: "https://nbachat.onrender.com/auth/twitch/callback",
+  scope: "user:read:email"
 }, (accessToken, refreshToken, profile, done) => {
   return done(null, profile);
 }));
 
-// Routes
-app.get('/auth/twitch', passport.authenticate('twitch'));
-app.get('/auth/twitch/callback',
-  passport.authenticate('twitch', {
-    failureRedirect: '/'
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
+
+// 🔐 Twitch login routes
+app.get("/auth/twitch", passport.authenticate("twitch"));
+
+app.get("/auth/twitch/callback",
+  passport.authenticate("twitch", {
+    failureRedirect: "https://dlt87.github.io/NBAchat-frontend/index.html"
   }),
   (req, res) => {
-    res.redirect('https://dlt87.github.io/NBAchat-frontend/index.html'); // Redirect after successful login
+    res.redirect("https://dlt87.github.io/NBAchat-frontend/index.html");
   }
 );
 
-// Auth status
 app.get("/auth/user", (req, res) => {
-  console.log("Session data:", req.session);
-  console.log("User data:", req.user);
+  console.log("🧪 Checking session user:", req.user);
   if (req.user) {
     res.json({ user: req.user });
   } else {
@@ -149,8 +76,42 @@ app.get("/auth/user", (req, res) => {
   }
 });
 
-app.get('/auth/logout', (req, res) => {
+app.get("/auth/logout", (req, res) => {
   req.logout(() => {
-    res.redirect('/');
+    res.redirect("https://dlt87.github.io/NBAchat-frontend/index.html");
   });
+});
+
+// 📦 Serve static files if needed (optional)
+// app.use(express.static(path.join(__dirname, 'public')));
+
+// 💬 In-memory message storage
+const messages = [];
+
+io.on("connection", (socket) => {
+  console.log("🟢 A user connected");
+
+  // Send chat history
+  socket.emit("chat history", messages);
+
+  socket.on("chat message", (msg) => {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const message = { ...msg, time };
+    messages.push(message);
+    io.emit("chat message", message);
+  });
+
+  socket.on("user joined", (username) => {
+    console.log(`${username} joined the chat`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 A user disconnected");
+  });
+});
+
+// 🚀 Start server
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`✅ Server listening on port ${PORT}`);
 });
