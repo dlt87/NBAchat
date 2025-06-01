@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const chatHistory = [];
+const cookie = require('cookie');
 
 const app = express();
 
@@ -21,19 +22,34 @@ const io = new Server(server, {
 const messages = []; // store chat messages in memory
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  try {
+    const cookies = socket.handshake.headers.cookie;
+    const parsedCookies = cookie.parse(cookies || '');
+    const raw = parsedCookies['connect.sid'];
 
-  // Send previous messages
+    if (raw) {
+      // Express session format: "s:<base64-signature>"
+      const sid = raw.startsWith('s:') ? raw.slice(2).split('.')[0] : raw;
+
+      // You can optionally verify this sid against session store here if needed
+
+      console.log('User connected with session ID:', sid);
+    }
+  } catch (err) {
+    console.error('Failed to parse cookies:', err);
+  }
+
+  console.log('a user connected');
+  
+  // Emit chat history
   socket.emit('chat history', messages);
 
-  // When a message is sent
-  // Store full message object
   socket.on('chat message', (msg) => {
     const now = new Date();
     const formattedTime = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'America/Vancouver' // <-- set the desired time zone here
+      timeZone: 'America/Vancouver'
     });
 
     const msgWithTime = {
@@ -45,10 +61,26 @@ io.on('connection', (socket) => {
     io.emit('chat message', msgWithTime);
   });
 
+  // ➕ Send join message
+  socket.on('user joined', (displayName) => {
+    const joinMsg = {
+      user: 'System',
+      text: `${displayName} has joined the chat.`,
+      time: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Vancouver'
+      })
+    };
+    messages.push(joinMsg);
+    io.emit('chat message', joinMsg);
+  });
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
 });
+
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
