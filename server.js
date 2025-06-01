@@ -16,6 +16,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "https://dlt87.github.io", // allow all for dev — restrict in production!
+    credentials: true // allow cookies to be sent
   },
 });
 
