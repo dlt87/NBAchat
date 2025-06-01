@@ -59,13 +59,12 @@ const TwitchStrategy = require('passport-twitch-new').Strategy;
 
 // Session setup
 app.use(session({
-  secret: "yourSecretKey",
+  secret: process.env.SESSION_SECRET || 'yourSecretKey',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,           // ✅ required for HTTPS
-    sameSite: "none",       // ✅ required for cross-site cookies (e.g., GitHub Pages)
-    maxAge: 1000 * 60 * 60  // optional: cookie expires in 1 hour
+    secure: true,         // ✅ required for HTTPS
+    sameSite: 'none'      // ✅ required for cross-site cookies
   }
 }));
 
