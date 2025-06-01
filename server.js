@@ -108,6 +108,18 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("🔴 A user disconnected");
   });
+
+  let viewerCount = 0;
+
+  io.on('connection', (socket) => {
+    viewerCount++;
+    io.emit('viewerCount', viewerCount);
+
+    socket.on('disconnect', () => {
+      viewerCount--;
+      io.emit('viewerCount', viewerCount);
+    });
+  });
 });
 
 // 🚀 Start server
