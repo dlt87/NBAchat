@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
     const formattedTime = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'America/New_York' // <-- set the desired time zone here
+      timeZone: 'America/Vancouver' // <-- set the desired time zone here
     });
 
     const msgWithTime = {
