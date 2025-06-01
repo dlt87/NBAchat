@@ -101,7 +101,7 @@ app.get('/auth/twitch/callback',
     failureRedirect: '/'
   }),
   (req, res) => {
-    res.redirect('/'); // Redirect after successful login
+    res.redirect('https://dlt87.github.io/NBAchat-frontend/index.html'); // Redirect after successful login
   }
 );
 
