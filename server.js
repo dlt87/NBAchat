@@ -108,17 +108,13 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("🔴 A user disconnected");
   });
+ 
+  viewerCount++;
+  io.emit('viewerCount', viewerCount);
 
-  let viewerCount = 0;
-
-  io.on('connection', (socket) => {
-    viewerCount++;
+  socket.on('disconnect', () => {
+    viewerCount--;
     io.emit('viewerCount', viewerCount);
-
-    socket.on('disconnect', () => {
-      viewerCount--;
-      io.emit('viewerCount', viewerCount);
-    });
   });
 });
 
