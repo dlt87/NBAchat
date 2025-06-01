@@ -15,7 +15,7 @@ app.use(cors({
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://dlt87.github.io", // allow all for dev — restrict in production!
+    origin: "https://dlt87.github.io/NBAchat-frontend/index.html", // allow all for dev — restrict in production!
     credentials: true // allow cookies to be sent
   },
 });
@@ -139,11 +139,13 @@ app.get('/auth/twitch/callback',
 );
 
 // Auth status
-app.get('/auth/user', (req, res) => {
-  if (req.isAuthenticated()) {
+app.get("/auth/user", (req, res) => {
+  console.log("Session data:", req.session);
+  console.log("User data:", req.user);
+  if (req.user) {
     res.json({ user: req.user });
   } else {
-    res.json({ user: null });
+    res.status(401).json({ user: null });
   }
 });
 
