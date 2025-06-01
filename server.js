@@ -5,7 +5,11 @@ const cors = require('cors');
 const chatHistory = [];
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "https://dlt87.github.io",
+  credentials: true
+}));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -115,8 +119,3 @@ app.get('/auth/logout', (req, res) => {
     res.redirect('/');
   });
 });
-
-app.use(cors({
-  origin: "https://dlt87.github.io", // your actual frontend domain
-  credentials: true
-}));
