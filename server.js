@@ -116,8 +116,6 @@ app.get('/auth/logout', (req, res) => {
   });
 });
 
-const cors = require("cors");
-
 app.use(cors({
   origin: "https://dlt87.github.io", // your actual frontend domain
   credentials: true
