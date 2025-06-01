@@ -1,0 +1,70 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 100px);
+            /* Adjust for header/footer height if needed */
+            position: relative;
+        }
+
+        .iframe-container {
+            width: 80%;
+            max-width: 960px;
+            aspect-ratio: 16 / 9;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="navbar">
+            <a href="nba.html">NBA Game ppv.wtf</a>
+        </div>
+    </header>
+
+    <section>
+        <div class="iframe-container">
+            <p>Let's watch the NBA game</p>
+            <iframe id="player" src="https://vecloud.eu/stream/3982547b-d0b3-4163-a9ad-ff4f05a283bf" scrolling="no"
+                allowfullscreen allow="encrypted-media; picture-in-picture;"></iframe>
+        </div>
+
+        <div class="chat">
+            <div id="messages"></div>
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </section>
+
+    <footer>
+        <h4>© 2023</h4>
+    </footer>
+</body>
+
+</html>
