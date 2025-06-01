@@ -88,6 +88,8 @@ app.get("/auth/logout", (req, res) => {
 // 💬 In-memory message storage
 const messages = [];
 
+let viewerCount = 0;
+
 io.on("connection", (socket) => {
   console.log("🟢 A user connected");
 
@@ -105,14 +107,11 @@ io.on("connection", (socket) => {
     console.log(`${username} joined the chat`);
   });
 
-  socket.on("disconnect", () => {
-    console.log("🔴 A user disconnected");
-  });
- 
   viewerCount++;
   io.emit('viewerCount', viewerCount);
 
   socket.on('disconnect', () => {
+    console.log("🔴 A user disconnected");
     viewerCount--;
     io.emit('viewerCount', viewerCount);
   });
