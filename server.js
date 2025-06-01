@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const chatHistory = [];
 
 const app = express();
 app.use(cors());
@@ -24,8 +25,16 @@ io.on('connection', (socket) => {
   // When a message is sent
   // Store full message object
   socket.on('chat message', (msg) => {
-    messages.push(msg);
-    io.emit('chat message', msg);
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const msgWithTime = {
+      ...msg,
+      time: formattedTime
+    };
+
+    messages.push(msgWithTime);           // Store message with time
+    io.emit('chat message', msgWithTime); // Broadcast message with time
   });
 
   socket.on('disconnect', () => {
