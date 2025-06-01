@@ -1,4 +1,4 @@
-const socket = io("https://chat-backend.onrender.com");
+const socket = io("https://nbachat.onrender.com");
 const video = document.getElementById('video');
 const streamUrl = 'YOUR_M3U8_STREAM_HERE';
 
