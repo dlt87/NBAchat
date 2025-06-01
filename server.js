@@ -16,6 +16,7 @@ const io = new Server(server, {
     credentials: true
   }
 });
+const userSockets = new Map(); // username => socket.id
 
 // 🔧 Required for Render & secure cookies
 app.set("trust proxy", 1);
@@ -105,6 +106,16 @@ io.on("connection", (socket) => {
 
   socket.on("user joined", (username) => {
     console.log(`${username} joined the chat`);
+
+    userSockets.set(username, socket.id);
+    socket.username = username; // Store on socket for disconnect
+  });
+
+  socket.on('private message', ({ to, message, from }) => {
+    const targetSocketId = userSockets.get(to);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit('private message', { from, message });
+    }
   });
 
   viewerCount++;
@@ -114,6 +125,10 @@ io.on("connection", (socket) => {
     console.log("🔴 A user disconnected");
     viewerCount--;
     io.emit('viewerCount', viewerCount);
+
+    if (socket.username) {
+      userSockets.delete(socket.username);
+    }
   });
 });
 
